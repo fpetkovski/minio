@@ -18,6 +18,7 @@
 package dsync
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -138,7 +139,7 @@ func (lh *lockServerHandler) RLockHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	reply, err := lh.lsrv.RLock(&args)
+	reply, err := lh.lsrv.RLock(r.Context(), &args)
 	if err == nil && !reply {
 		err = errLockConflict
 	}
@@ -238,13 +239,18 @@ func (l *lockServer) Unlock(args *LockArgs) (reply bool, err error) {
 
 const ReadLock = 1
 
-func (l *lockServer) RLock(args *LockArgs) (reply bool, err error) {
+func (l *lockServer) RLock(ctx context.Context, args *LockArgs) (reply bool, err error) {
 	if d := atomic.LoadInt64(&l.responseDelay); d != 0 {
 		time.Sleep(time.Duration(d))
 	}
 
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
+
+	if ctx.Err() != nil {
+		return false, ctx.Err()
+	}
+
 	var locksHeld int64
 	if locksHeld, reply = l.lockMap[args.Resources[0]]; !reply {
 		l.lockMap[args.Resources[0]] = ReadLock // No locks held on the given name, so claim (first) read lock

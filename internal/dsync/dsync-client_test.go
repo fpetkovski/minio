@@ -100,13 +100,13 @@ func toLockError(err error) error {
 }
 
 // Call makes a REST call to the remote endpoint using the msgp codec
-func (restClient *ReconnectRESTClient) Call(method string, args LockArgs) (status bool, err error) {
+func (restClient *ReconnectRESTClient) Call(ctx context.Context, method string, args LockArgs) (status bool, err error) {
 	buf, err := args.MarshalMsg(nil)
 	if err != nil {
 		return false, err
 	}
 	body := bytes.NewReader(buf)
-	respBody, err := restClient.rest.Call(context.Background(), method,
+	respBody, err := restClient.rest.Call(ctx, method,
 		url.Values{}, body, body.Size())
 	defer xhttp.DrainBody(respBody)
 
@@ -121,27 +121,27 @@ func (restClient *ReconnectRESTClient) Call(method string, args LockArgs) (statu
 }
 
 func (restClient *ReconnectRESTClient) RLock(ctx context.Context, args LockArgs) (status bool, err error) {
-	return restClient.Call("/v1/rlock", args)
+	return restClient.Call(ctx, "/v1/rlock", args)
 }
 
 func (restClient *ReconnectRESTClient) Lock(ctx context.Context, args LockArgs) (status bool, err error) {
-	return restClient.Call("/v1/lock", args)
+	return restClient.Call(ctx, "/v1/lock", args)
 }
 
 func (restClient *ReconnectRESTClient) RUnlock(ctx context.Context, args LockArgs) (status bool, err error) {
-	return restClient.Call("/v1/runlock", args)
+	return restClient.Call(ctx, "/v1/runlock", args)
 }
 
 func (restClient *ReconnectRESTClient) Unlock(ctx context.Context, args LockArgs) (status bool, err error) {
-	return restClient.Call("/v1/unlock", args)
+	return restClient.Call(ctx, "/v1/unlock", args)
 }
 
 func (restClient *ReconnectRESTClient) Refresh(ctx context.Context, args LockArgs) (refreshed bool, err error) {
-	return restClient.Call("/v1/refresh", args)
+	return restClient.Call(ctx, "/v1/refresh", args)
 }
 
 func (restClient *ReconnectRESTClient) ForceUnlock(ctx context.Context, args LockArgs) (reply bool, err error) {
-	return restClient.Call("/v1/force-unlock", args)
+	return restClient.Call(ctx, "/v1/force-unlock", args)
 }
 
 func (restClient *ReconnectRESTClient) String() string {

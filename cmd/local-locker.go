@@ -167,6 +167,11 @@ func (l *localLocker) RLock(ctx context.Context, args dsync.LockArgs) (reply boo
 
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
+
+	if ctx.Err() != nil {
+		return false, ctx.Err()
+	}
+
 	resource := args.Resources[0]
 	now := UTCNow()
 	lrInfo := lockRequesterInfo{
